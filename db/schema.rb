@@ -10,10 +10,15 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_24_180205) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_24_190811) do
   create_table "captures", force: :cascade do |t|
+    t.integer "count_404"
+    t.integer "count_500"
     t.datetime "created_at", null: false
+    t.float "lcp"
     t.integer "site_id", null: false
+    t.float "total_size_mb"
+    t.float "ttfb"
     t.datetime "updated_at", null: false
     t.index ["site_id"], name: "index_captures_on_site_id"
   end
