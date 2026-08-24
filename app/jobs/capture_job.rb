@@ -16,9 +16,11 @@ class CaptureJob < ApplicationJob
 
     ttfb = browser.evaluate("performance.getEntriesByType('navigation')[0].responseStart")
     lcp = browser.evaluate_async(LCP_OBSERVER_JS, 5)
-    statuses = browser.network.traffic.filter_map { |exchange| exchange.response&.status }
+    responses = browser.network.traffic.filter_map(&:response)
+    statuses = responses.map(&:status)
+    total_size_mb = (responses.sum { |response| [ response.body_size, 0 ].max } / 1024.0 / 1024.0).round(2)
 
-    { ttfb: ttfb, lcp: lcp, count_404: statuses.count(404), count_500: statuses.count(500) }
+    { ttfb: ttfb, lcp: lcp, count_404: statuses.count(404), count_500: statuses.count(500), total_size_mb: total_size_mb }
   ensure
     browser&.quit
   end
