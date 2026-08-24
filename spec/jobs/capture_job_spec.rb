@@ -8,7 +8,6 @@ RSpec.describe CaptureJob do
     server_error = instance_double(Ferrum::Network::Exchange, response: instance_double(Ferrum::Network::Response, status: 500, body_size: 300))
     ok = instance_double(Ferrum::Network::Exchange, response: instance_double(Ferrum::Network::Response, status: 200, body_size: 24276))
     cached = instance_double(Ferrum::Network::Exchange, response: instance_double(Ferrum::Network::Response, status: 200, body_size: -2076))
-    unfinished = instance_double(Ferrum::Network::Exchange, response: instance_double(Ferrum::Network::Response, status: 200, body_size: nil))
     allow(Ferrum::Browser).to receive(:new).and_return(browser)
     allow(browser).to receive(:evaluate)
       .with("performance.getEntriesByType('navigation')[0].responseStart")
@@ -17,7 +16,7 @@ RSpec.describe CaptureJob do
       .with(CaptureJob::LCP_OBSERVER_JS, 5)
       .and_return(268)
     allow(browser).to receive(:network).and_return(network)
-    allow(network).to receive(:traffic).and_return([ ok, not_found, not_found, server_error, cached, unfinished ])
+    allow(network).to receive(:traffic).and_return([ ok, not_found, not_found, server_error, cached ])
 
     result = CaptureJob.perform_now("https://www.jordanmoore.dev/")
 
@@ -55,5 +54,26 @@ RSpec.describe CaptureJob do
       count_500: { value: 0, ok: true },
       total_size_mb: { value: 2.0, ok: false },
     )
+  end
+
+  context "when a network response never finishes loading and has no body_size" do
+    it "treats it as contributing 0 bytes instead of raising" do
+      browser = instance_double(Ferrum::Browser, goto: true, quit: true)
+      network = instance_double(Ferrum::Network)
+      unfinished = instance_double(Ferrum::Network::Exchange, response: instance_double(Ferrum::Network::Response, status: 200, body_size: nil))
+      allow(Ferrum::Browser).to receive(:new).and_return(browser)
+      allow(browser).to receive(:evaluate)
+        .with("performance.getEntriesByType('navigation')[0].responseStart")
+        .and_return(100)
+      allow(browser).to receive(:evaluate_async)
+        .with(CaptureJob::LCP_OBSERVER_JS, 5)
+        .and_return(200)
+      allow(browser).to receive(:network).and_return(network)
+      allow(network).to receive(:traffic).and_return([ unfinished ])
+
+      result = CaptureJob.perform_now("https://www.jordanmoore.dev/")
+
+      expect(result[:total_size_mb]).to eq(value: 0.0, ok: true)
+    end
   end
 end
