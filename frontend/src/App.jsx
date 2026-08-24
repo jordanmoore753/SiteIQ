@@ -1,14 +1,22 @@
 import { useState } from 'react'
+import MeasurementsList from './components/MeasurementsList'
 
 function App() {
   const [url, setUrl] = useState('https://www.jordanmoore.dev/')
+  const [measurements, setMeasurements] = useState([])
 
-  const handleMeasure = () => {
-    fetch('http://localhost:3000/captures', {
+  const handleMeasure = async () => {
+    const response = await fetch('http://localhost:3000/captures', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ capture: { url } }),
     })
+    const capture = await response.json()
+
+    setMeasurements([
+      { name: 'TTFB', value: capture.ttfb },
+      { name: 'LCP', value: capture.lcp },
+    ])
   }
 
   return (
@@ -31,6 +39,9 @@ function App() {
           Measure
         </button>
       </div>
+      {measurements.length > 0 && (
+        <MeasurementsList measurements={measurements} />
+      )}
     </main>
   )
 }
