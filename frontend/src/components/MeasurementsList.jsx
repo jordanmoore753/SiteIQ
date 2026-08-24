@@ -7,7 +7,9 @@ function MeasurementsList({ measurements }) {
           className="flex items-center justify-between px-4 py-3"
         >
           <span className="text-gray-900">{measurement.name}</span>
-          <span className="text-gray-500">
+          <span
+            className={measurement.ok ? 'text-green-600' : 'text-red-600'}
+          >
             {measurement.unit === 'ms'
               ? `${Math.round(measurement.value / 10) * 10} ms`
               : measurement.unit
