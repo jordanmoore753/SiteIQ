@@ -4,8 +4,8 @@ class CapturesController < ApplicationController
     capture = site.captures.new
 
     if capture.save
-      ttfb = CaptureJob.perform_now(site.url)
-      render json: capture.as_json.merge(ttfb: ttfb), status: :created
+      metrics = CaptureJob.perform_now(site.url)
+      render json: capture.as_json.merge(metrics), status: :created
     else
       render json: capture.errors, status: :unprocessable_entity
     end
