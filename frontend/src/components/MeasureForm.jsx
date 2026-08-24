@@ -1,4 +1,6 @@
-function MeasureForm({ url, onUrlChange, onSubmit }) {
+import Spinner from './Spinner'
+
+function MeasureForm({ url, onUrlChange, onSubmit, isMeasuring }) {
   return (
     <form onSubmit={onSubmit} className="flex w-full max-w-md gap-2">
       <input
@@ -9,9 +11,11 @@ function MeasureForm({ url, onUrlChange, onSubmit }) {
       />
       <button
         type="submit"
-        className="rounded-md bg-indigo-600 px-4 py-2 font-medium text-white shadow-sm hover:bg-indigo-500"
+        disabled={isMeasuring}
+        className="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 font-medium text-white shadow-sm hover:bg-indigo-500 disabled:opacity-75"
       >
-        Measure
+        {isMeasuring && <Spinner />}
+        {isMeasuring ? 'Measuring...' : 'Measure'}
       </button>
     </form>
   )
