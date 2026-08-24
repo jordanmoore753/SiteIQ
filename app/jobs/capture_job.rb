@@ -15,15 +15,21 @@ class CaptureJob < ApplicationJob
   PAGE_SIZE_OK_MB = 1.5
   ERROR_COUNT_OK = 0
 
-  private_constant :TTFB_OK_MS, :LCP_OK_MS, :PAGE_SIZE_OK_MB, :ERROR_COUNT_OK
+  private_constant :LCP_OBSERVER_JS, :TTFB_OK_MS, :LCP_OK_MS, :PAGE_SIZE_OK_MB, :ERROR_COUNT_OK
 
+  # Loads a URL in a headless browser and measures TTFB, LCP, subresource
+  # error counts, and total page size.
+  #
+  # @param url [String] the URL to load and measure
+  # @return [Hash] a hash of metric name to { value:, ok: } for :ttfb, :lcp,
+  #   :count_404, :count_500, and :total_size_mb
   def perform(url)
     browser = Ferrum::Browser.new
-    browser.goto(url)
+    navigate(browser, url)
 
-    ttfb = browser.evaluate("performance.getEntriesByType('navigation')[0].responseStart")
-    lcp = browser.evaluate_async(LCP_OBSERVER_JS, 5)
-    responses = browser.network.traffic.filter_map(&:response)
+    ttfb = measure_ttfb(browser)
+    lcp = measure_lcp(browser)
+    responses = fetch_responses(browser)
     statuses = responses.map(&:status)
     total_size_mb = (responses.sum { |response| [ response.body_size || 0, 0 ].max } / 1024.0 / 1024.0).round(2)
     count_404 = statuses.count(404)
@@ -38,5 +44,42 @@ class CaptureJob < ApplicationJob
     }
   ensure
     browser&.quit
+  end
+
+  private
+
+  # Navigates the browser to the given URL.
+  #
+  # @param browser [Ferrum::Browser]
+  # @param url [String] the URL to load
+  # @return [void]
+  def navigate(browser, url)
+    browser.goto(url)
+  end
+
+  # Reads Time to First Byte from the Navigation Timing API.
+  #
+  # @param browser [Ferrum::Browser]
+  # @return [Float] TTFB in milliseconds
+  def measure_ttfb(browser)
+    browser.evaluate("performance.getEntriesByType('navigation')[0].responseStart")
+  end
+
+  # Reads Largest Contentful Paint via a PerformanceObserver, since LCP
+  # entries aren't available through getEntriesByType without one.
+  #
+  # @param browser [Ferrum::Browser]
+  # @return [Float, nil] LCP in milliseconds, or nil if no entry was
+  #   reported before the internal timeout
+  def measure_lcp(browser)
+    browser.evaluate_async(LCP_OBSERVER_JS, 5)
+  end
+
+  # Fetches every network response the page triggered while loading.
+  #
+  # @param browser [Ferrum::Browser]
+  # @return [Array<Ferrum::Network::Response>]
+  def fetch_responses(browser)
+    browser.network.traffic.filter_map(&:response)
   end
 end
