@@ -18,6 +18,7 @@ function App() {
       { name: 'LCP', value: capture.lcp, unit: 'ms' },
       { name: '404s', value: capture.count_404 },
       { name: '500s', value: capture.count_500 },
+      { name: 'Page Size', value: capture.total_size_mb, unit: 'MB' },
     ])
   }
 
