@@ -1,5 +1,5 @@
 class CapturesController < ApplicationController
-  def create
+  def measure
     site = Site.find_or_create_by(url: capture_params[:url])
     metrics = CaptureJob.perform_now(site.url)
     capture = site.captures.new(metrics)
