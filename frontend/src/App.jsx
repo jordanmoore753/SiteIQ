@@ -5,6 +5,7 @@ import SaveButton from './components/SaveButton'
 
 function App() {
   const [url, setUrl] = useState('https://www.jordanmoore.dev/')
+  const [capture, setCapture] = useState(null)
   const [measurements, setMeasurements] = useState([])
   const [isMeasuring, setIsMeasuring] = useState(false)
   const [isMeasured, setIsMeasured] = useState(false)
@@ -12,6 +13,7 @@ function App() {
   const handleMeasure = async (e) => {
     e.preventDefault()
     setIsMeasured(false)
+    setCapture(null)
     setMeasurements([])
     setIsMeasuring(true)
 
@@ -20,17 +22,35 @@ function App() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ capture: { url } }),
     })
-    const capture = await response.json()
+    const data = await response.json()
 
+    setCapture(data)
     setMeasurements([
-      { name: 'TTFB', ...capture.ttfb, unit: 'ms' },
-      { name: 'LCP', ...capture.lcp, unit: 'ms' },
-      { name: '404s', ...capture.count_404 },
-      { name: '500s', ...capture.count_500 },
-      { name: 'Page Size', ...capture.total_size_mb, unit: 'MB' },
+      { name: 'TTFB', ...data.ttfb, unit: 'ms' },
+      { name: 'LCP', ...data.lcp, unit: 'ms' },
+      { name: '404s', ...data.count_404 },
+      { name: '500s', ...data.count_500 },
+      { name: 'Page Size', ...data.total_size_mb, unit: 'MB' },
     ])
     setIsMeasuring(false)
     setIsMeasured(true)
+  }
+
+  const handleSave = async () => {
+    await fetch('http://localhost:3000/captures', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        capture: {
+          site_id: capture.site_id,
+          ttfb: capture.ttfb.value,
+          lcp: capture.lcp.value,
+          count_404: capture.count_404.value,
+          count_500: capture.count_500.value,
+          total_size_mb: capture.total_size_mb.value,
+        },
+      }),
+    })
   }
 
   return (
@@ -47,7 +67,7 @@ function App() {
       {measurements.length > 0 && (
         <MeasurementsList measurements={measurements} />
       )}
-      {isMeasured && <SaveButton />}
+      {isMeasured && <SaveButton onClick={handleSave} />}
     </main>
   )
 }
