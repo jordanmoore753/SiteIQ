@@ -14,11 +14,11 @@ function App() {
     const capture = await response.json()
 
     setMeasurements([
-      { name: 'TTFB', value: capture.ttfb, unit: 'ms' },
-      { name: 'LCP', value: capture.lcp, unit: 'ms' },
-      { name: '404s', value: capture.count_404 },
-      { name: '500s', value: capture.count_500 },
-      { name: 'Page Size', value: capture.total_size_mb, unit: 'MB' },
+      { name: 'TTFB', ...capture.ttfb, unit: 'ms' },
+      { name: 'LCP', ...capture.lcp, unit: 'ms' },
+      { name: '404s', ...capture.count_404 },
+      { name: '500s', ...capture.count_500 },
+      { name: 'Page Size', ...capture.total_size_mb, unit: 'MB' },
     ])
   }
 
