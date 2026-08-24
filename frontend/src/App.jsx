@@ -15,7 +15,7 @@ function App() {
     setMeasurements([])
     setIsMeasuring(true)
 
-    const response = await fetch('http://localhost:3000/captures', {
+    const response = await fetch('http://localhost:3000/captures/measure', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ capture: { url } }),
