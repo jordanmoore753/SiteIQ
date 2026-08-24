@@ -10,7 +10,9 @@ function MeasurementsList({ measurements }) {
           <span className="text-gray-500">
             {measurement.unit === 'ms'
               ? `${Math.round(measurement.value / 10) * 10} ms`
-              : measurement.value}
+              : measurement.unit
+                ? `${measurement.value} ${measurement.unit}`
+                : measurement.value}
           </span>
         </li>
       ))}
