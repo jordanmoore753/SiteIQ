@@ -1,11 +1,11 @@
 class CapturesController < ApplicationController
   def create
     site = Site.find_or_create_by(url: capture_params[:url])
-    capture = site.captures.new
+    metrics = CaptureJob.perform_now(site.url)
+    capture = site.captures.new(metrics)
 
     if capture.save
-      metrics = CaptureJob.perform_now(site.url)
-      render json: capture.as_json.merge(metrics), status: :created
+      render json: capture, status: :created
     else
       render json: capture.errors, status: :unprocessable_entity
     end
