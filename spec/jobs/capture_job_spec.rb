@@ -8,6 +8,7 @@ RSpec.describe CaptureJob do
     server_error = instance_double(Ferrum::Network::Exchange, response: instance_double(Ferrum::Network::Response, status: 500, body_size: 300))
     ok = instance_double(Ferrum::Network::Exchange, response: instance_double(Ferrum::Network::Response, status: 200, body_size: 24276))
     cached = instance_double(Ferrum::Network::Exchange, response: instance_double(Ferrum::Network::Response, status: 200, body_size: -2076))
+    unfinished = instance_double(Ferrum::Network::Exchange, response: instance_double(Ferrum::Network::Response, status: 200, body_size: nil))
     allow(Ferrum::Browser).to receive(:new).and_return(browser)
     allow(browser).to receive(:evaluate)
       .with("performance.getEntriesByType('navigation')[0].responseStart")
@@ -16,7 +17,7 @@ RSpec.describe CaptureJob do
       .with(CaptureJob::LCP_OBSERVER_JS, 5)
       .and_return(268)
     allow(browser).to receive(:network).and_return(network)
-    allow(network).to receive(:traffic).and_return([ ok, not_found, not_found, server_error, cached ])
+    allow(network).to receive(:traffic).and_return([ ok, not_found, not_found, server_error, cached, unfinished ])
 
     result = CaptureJob.perform_now("https://www.jordanmoore.dev/")
 
